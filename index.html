@@ -1,0 +1,266 @@
+// اسم التطبيق: Nova Tools X 🔥 (نسخة إدمانية)
+
+// =========================
+// 📁 index.html
+// =========================
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova Tools X</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>Nova Tools X 🔥</header>
+
+<div class="stats">
+  🔥 سلسلة الاستخدام: <span id="streak">0</span> يوم
+</div>
+
+<div class="container">
+  <div class="card" onclick="show('currency')">💱 تحويل العملات</div>
+  <div class="card" onclick="show('calc')">🧮 آلة حاسبة</div>
+  <div class="card" onclick="show('notes')">📝 ملاحظات</div>
+  <div class="card" onclick="show('time')">⏰ الوقت</div>
+  <div class="card" onclick="show('todo')">✅ مهامي</div>
+</div>
+
+<div id="tool"></div>
+
+<script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('service-worker.js');
+}
+</script>
+</body>
+</html>
+
+
+// =========================
+// 📁 style.css
+// =========================
+body {
+  margin:0;
+  font-family: Arial;
+  background:#0f172a;
+  color:white;
+}
+
+header {
+  text-align:center;
+  padding:15px;
+  font-size:22px;
+  background:#1e293b;
+}
+
+.stats {
+  text-align:center;
+  padding:10px;
+  background:#020617;
+  color:#22c55e;
+}
+
+.container {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  padding:15px;
+}
+
+.card {
+  background:#1e293b;
+  padding:20px;
+  border-radius:15px;
+  text-align:center;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+.card:hover {
+  background:#334155;
+  transform:scale(1.05);
+}
+
+#tool { padding:15px; }
+
+input {
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border:none;
+  border-radius:10px;
+}
+
+button {
+  padding:10px;
+  border:none;
+  border-radius:10px;
+  background:#22c55e;
+  color:white;
+  width:100%;
+}
+
+.task {
+  background:#1e293b;
+  margin:5px 0;
+  padding:10px;
+  border-radius:10px;
+}
+
+
+// =========================
+// 📁 app.js
+// =========================
+initStreak();
+
+function initStreak(){
+let today=new Date().toDateString();
+let last=localStorage.getItem('lastVisit');
+let streak=parseInt(localStorage.getItem('streak')||0);
+
+if(last!==today){
+  streak++;
+  localStorage.setItem('streak',streak);
+  localStorage.setItem('lastVisit',today);
+}
+
+document.getElementById('streak').innerText=streak;
+}
+
+function show(type){
+let html='';
+
+if(type==='currency'){
+html=`
+<h3>تحويل الدولار إلى دينار</h3>
+<input id="usd" placeholder="USD">
+<button onclick="convert()">تحويل</button>
+<div id="res"></div>`;
+}
+
+if(type==='calc'){
+html=`
+<h3>آلة حاسبة</h3>
+<input id="exp" placeholder="5+5">
+<button onclick="calc()">احسب</button>
+<div id="res"></div>`;
+}
+
+if(type==='notes'){
+html=`
+<h3>ملاحظات</h3>
+<input id="note">
+<button onclick="saveNote()">حفظ</button>
+<div id="notesList"></div>`;
+setTimeout(loadNotes,100);
+}
+
+if(type==='time'){
+html=`<h3>الوقت</h3><div id="clock"></div>`;
+setInterval(()=>{
+let now=new Date();
+document.getElementById('clock').innerText=now.toLocaleString();
+},1000);
+}
+
+if(type==='todo'){
+html=`
+<h3>مهامي اليومية</h3>
+<input id="taskInput" placeholder="مهمة جديدة">
+<button onclick="addTask()">إضافة</button>
+<div id="taskList"></div>`;
+setTimeout(loadTasks,100);
+}
+
+document.getElementById('tool').innerHTML=html;
+}
+
+function convert(){
+let usd=document.getElementById('usd').value;
+document.getElementById('res').innerText=(usd*1300)+' IQD';
+}
+
+function calc(){
+try{
+let exp=document.getElementById('exp').value;
+document.getElementById('res').innerText=eval(exp);
+}catch{
+document.getElementById('res').innerText='خطأ';
+}
+}
+
+function saveNote(){
+let note=document.getElementById('note').value;
+let notes=JSON.parse(localStorage.getItem('notes')||'[]');
+notes.push(note);
+localStorage.setItem('notes',JSON.stringify(notes));
+loadNotes();
+}
+
+function loadNotes(){
+let notes=JSON.parse(localStorage.getItem('notes')||'[]');
+let html='';
+notes.forEach(n=> html+=`<p>• ${n}</p>`);
+document.getElementById('notesList').innerHTML=html;
+}
+
+function addTask(){
+let t=document.getElementById('taskInput').value;
+let tasks=JSON.parse(localStorage.getItem('tasks')||'[]');
+tasks.push(t);
+localStorage.setItem('tasks',JSON.stringify(tasks));
+loadTasks();
+}
+
+function loadTasks(){
+let tasks=JSON.parse(localStorage.getItem('tasks')||'[]');
+let html='';
+tasks.forEach(t=> html+=`<div class="task">✅ ${t}</div>`);
+document.getElementById('taskList').innerHTML=html;
+}
+
+
+// =========================
+// 📁 manifest.json
+// =========================
+{
+  "name": "Nova Tools X",
+  "short_name": "NovaX",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e293b",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
+
+
+// =========================
+// 📁 service-worker.js
+// =========================
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open('nova-x').then(cache => {
+      return cache.addAll([
+        './',
+        './index.html',
+        './style.css',
+        './app.js'
+      ]);
+    })
+  );
+});
+
+self.addEventListener('fetch', e => {
+  e.respondWith(
+    caches.match(e.request).then(res => res || fetch(e.request))
+  );
+});
